@@ -1,13 +1,70 @@
 """CPU functionality."""
 
 import sys
+from typing import List, Dict, Any
+from ls8.cpu_components.cpu_reg import CPUReg
+from ls8.cpu_components.cpu_ram import CPURam
+
+# Instructions for today
+"""
+Day 1: Get print8.ls8 running
+ Inventory what is here
+ Implement the CPU constructor
+
+ Add RAM functions ram_read() and ram_write()
+
+ Implement the core of run()
+
+ Implement the HLT instruction handler
+
+ Add the LDI instruction
+
+ Add the PRN instruction
+"""
+
 
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        # Program Counter -- address of the currently executing instruction
+        self.pc: int = 0
+        # Flags -- holds the current flag status
+        self.fl: int = 0
+        self.ir: int = 0
+        self.reg: List[int] = [0] * 8
+        self.ram: List[int] = [0] * 256
+        self.instruction_dispatcher: Dict = {}
+
+    @staticmethod
+    def _hlt():
+        print("\nHalted.")
+        sys.exit(0)
+
+    def _ldi(self, operand_a: int, operand_b: int):
+        self.reg[operand_a] = operand_b
+        self.ir += 3
+
+    def _prn(self):
+        print("\n8")
+        self.ir += 2
+
+    def set_instruction_dispatcher(self):
+        self.instruction_dispatcher = {
+            0b00000001: lambda _, __: self._hlt(),
+            0b10000010: lambda op_a, op_b: self._ldi(op_a, op_b),
+            0b01000111: lambda _, __: self._prn()
+        }
+
+    # Memory Address Register -- holds the memory address we're reading or writing
+    # Memory Data Register -- holds the value to write or the value just read
+    def ram_read(self, mar: int) -> int:
+        mdr = self.ram[mar]
+        return mdr
+
+    def ram_write(self, mar: int, mdr: int):
+        self.ram[mar] = mdr
 
     def load(self):
         """Load a program into memory."""
@@ -18,25 +75,24 @@ class CPU:
 
         program = [
             # From print8.ls8
-            0b10000010, # LDI R0,8
+            0b10000010,  # LDI R0,8
             0b00000000,
             0b00001000,
-            0b01000111, # PRN R0
+            0b01000111,  # PRN R0
             0b00000000,
-            0b00000001, # HLT
+            0b00000001,  # HLT
         ]
 
         for instruction in program:
             self.ram[address] = instruction
             address += 1
 
-
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        # elif op == "SUB": etc
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -48,8 +104,8 @@ class CPU:
 
         print(f"TRACE: %02X | %02X %02X %02X |" % (
             self.pc,
-            #self.fl,
-            #self.ie,
+            # self.fl,
+            # self.ie,
             self.ram_read(self.pc),
             self.ram_read(self.pc + 1),
             self.ram_read(self.pc + 2)
@@ -62,4 +118,14 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+
+        is_running: bool = True
+
+        # Instruction Register -- contains a copy of the currently executing instruction
+        self.ir = self.pc
+
+        while is_running:
+            instruction = self.ram_read(self.ir)
+            operand_a = self.ram_read(self.ir + 1)
+            operand_b = self.ram_read(self.ir + 2)
+            self.instruction_dispatcher[instruction](operand_a, operand_b)
