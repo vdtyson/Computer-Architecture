@@ -184,7 +184,7 @@ If the user runs `python3 ls8.py examples/mult.ls8`, the values in `sys.argv`
 will be:
 
 ```python
-sys.argv[0] == "ls8.py"
+sys.argv[0] == "ls8_impl.py"
 sys.argv[1] == "examples/mult.ls8"
 ```
 
