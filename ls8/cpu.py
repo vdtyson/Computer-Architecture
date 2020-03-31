@@ -7,19 +7,13 @@ from ls8.cpu_components.cpu_ram import CPURam
 
 # Instructions for today
 """
-Day 1: Get print8.ls8 running
- Inventory what is here
- Implement the CPU constructor
+Day 2:
 
- Add RAM functions ram_read() and ram_write()
+Un-hardcode the machine code
 
- Implement the core of run()
+Implement the load() function to load an .ls8 file given the filename passed in as an argument
 
- Implement the HLT instruction handler
-
- Add the LDI instruction
-
- Add the PRN instruction
+Implement a Multiply instruction (run mult.ls8)
 """
 
 
@@ -35,7 +29,12 @@ class CPU:
         self.ir: int = 0
         self.reg: List[int] = [0] * 8
         self.ram: List[int] = [0] * 256
-        self.instruction_dispatcher: Dict = {}
+        self.instruction_dispatcher: Dict = {
+            0b00000001: lambda _, __: self._hlt(),
+            0b10000010: lambda op_a, op_b: self._ldi(op_a, op_b),
+            0b01000111: lambda op_a, _: self._prn(op_a),
+            0b10100010: lambda op_a, op_b: self._mul(op_a, op_b)
+        }
 
     @staticmethod
     def _hlt():
@@ -46,16 +45,13 @@ class CPU:
         self.reg[operand_a] = operand_b
         self.ir += 3
 
-    def _prn(self):
-        print("\n8")
+    def _prn(self, operand_a: int):
+        print(self.reg[operand_a])
         self.ir += 2
 
-    def set_instruction_dispatcher(self):
-        self.instruction_dispatcher = {
-            0b00000001: lambda _, __: self._hlt(),
-            0b10000010: lambda op_a, op_b: self._ldi(op_a, op_b),
-            0b01000111: lambda _, __: self._prn()
-        }
+    def _mul(self, operand_a: int, operand_b: int):
+        self.reg[operand_a] = self.reg[operand_a] * self.reg[operand_b]
+        self.ir += 3
 
     # Memory Address Register -- holds the memory address we're reading or writing
     # Memory Data Register -- holds the value to write or the value just read
@@ -66,22 +62,29 @@ class CPU:
     def ram_write(self, mar: int, mdr: int):
         self.ram[mar] = mdr
 
-    def load(self):
+    def load(self, file_name: str):
         """Load a program into memory."""
+
+        print("Loading")
 
         address = 0
 
         # For now, we've just hardcoded a program:
 
-        program = [
-            # From print8.ls8
-            0b10000010,  # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111,  # PRN R0
-            0b00000000,
-            0b00000001,  # HLT
-        ]
+        # program = [
+        #    # From print8.ls8
+        #    0b10000010,  # LDI R0,8
+        #    0b00000000,
+        #    0b00001000,
+        #    0b01000111,  # PRN R0
+        #    0b00000000,
+        #    0b00000001,  # HLT
+        # ]
+
+        with open(file_name) as f:
+            lines: List[str] = f.readlines()
+            lines = [line for line in lines if line.startswith('0') or line.startswith('1')]
+            program: List[int] = [int(line[:8], 2) for line in lines]
 
         for instruction in program:
             self.ram[address] = instruction
