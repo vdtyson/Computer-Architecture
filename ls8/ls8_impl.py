@@ -4,13 +4,15 @@
 
 import sys
 from ls8.cpu import CPU
+from typing import DefaultDict, Dict
 
 
-def run_ls8(cpu: type(CPU), file_name: str):
+def start_ls8(cpu: type(CPU), file_name: str):
     cpu.load(file_name)
     cpu.run()
 
 
 if __name__ == '__main__':
-    file: str = input("Enter file name: ")
-    run_ls8(CPU(), file)
+    c_pu: type(CPU) = CPU()
+    file_name_input: str = input("Input unique file name (examples/[unique file name].ls8): ")
+    start_ls8(c_pu, f'examples/{file_name_input}.ls8')

@@ -65,7 +65,7 @@ class CPU:
     def load(self, file_name: str):
         """Load a program into memory."""
 
-        print("Loading")
+        print("Loading program. Beep bop boop\n")
 
         address = 0
 
